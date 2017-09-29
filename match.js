@@ -33,8 +33,8 @@ class Match {
     }
     recurseOnMatch(this);
     return next;
-  };
+  }
 
-};
+}
 
 module.exports = Match;

@@ -4,9 +4,7 @@ const _ = require('underscore');
 const TelegramBot = require('node-telegram-bot-api');
 const Player = require('./player.model');
 
-const findNextPowerOfTwo = num => {
-  return Math.pow(2, Math.ceil(Math.log2(num)));
-};
+const findNextPowerOfTwo = num => Math.pow(2, Math.ceil(Math.log2(num)));
 
 const TournamentSchema = new mongoose.Schema({
   admin: {type: mongoose.Schema.Types.ObjectId, ref: 'player'},
@@ -14,6 +12,7 @@ const TournamentSchema = new mongoose.Schema({
   start_date: Date,
   end_date: Date,
   games: Array,
+  playing: Boolean,
   players: [{type: mongoose.Schema.Types.ObjectId, ref: 'player', default: [] }],
   playingPlayers: [{type: mongoose.Schema.Types.ObjectId, ref: 'player', default: [] }],
   root: { type: mongoose.Schema.Types.ObjectId, ref: 'match' },
@@ -79,6 +78,7 @@ Tournament.createTournament = async tournamentInfo => {
     start_date: date,
     end_date: null,
     games: [],
+    playing: false,
     players: tournamentPlayers,
   });
   newTournament.createMatches();
@@ -86,8 +86,8 @@ Tournament.createTournament = async tournamentInfo => {
   return newTournament;
 };
 
-Tournament.search = async function search (chatId) {
-  return await Tournament.find({chatId}).sort({date}).limit(1);
-};
+// Tournament.search = async function search (chatId) {
+//   return await Tournament.find({chatId}).sort({date}).limit(1);
+// };
 
 module.exports = Tournament;

@@ -27,10 +27,14 @@ class TournamentBot {
     if (msg.chat.type === 'group') {
       this.telegram.getChatAdministrators(chatId)
         .then((data) => {
-          const chatAdmin = {id: data[0].user.id, name: data[0].user.first_name };
-          if (msg.from.id === chatAdmin.id) {
+          if (msg.from.id === data[0].user.id) {
             if (this.chatsOpen[chatId] === undefined) {
-              this.chatsOpen[chatId] = new this.Tournament({chatId,chatAdmin});
+              const admin = new Player({
+                telegram_id: data[0].user.id,
+                first_name: data[0].user.first_name,
+              });
+              const playing = false;
+              this.chatsOpen[chatId] = new this.Tournament({chatId, admin, playing});
               this.telegram.sendMessage(chatId, response, {parse_mode: 'Markdown'});
             } else if (this.chatsOpen[chatId].playing === true) {
               this.telegram.sendMessage(chatId, messages.alreadyPlaying);

@@ -15,7 +15,7 @@ class Tournament {
     this.root;
     this.finals = {};
     this.round;
-  };
+  }
 
   createTournament (callback) {
     const numberOfPlayers = Object.keys(this.players).length;
@@ -50,7 +50,7 @@ class Tournament {
     this.root = matches.shift();
     this.root.sanitise();
     createPNG(this.root, this.players, (data) => {
-      callback(data)
+      callback(data);
     });
   }
 
@@ -80,9 +80,9 @@ class Tournament {
     this.placeInNextGame(game.winner);
     game.playing = false;
     createPNG(this.root, this.players, (data) => {
-      callback(data)
+      callback(data);
     });
-  };
+  }
 
   placeInNextGame (winner) {
     function recurseOnMatch (match) {
@@ -93,12 +93,12 @@ class Tournament {
         if (match.player1 && !match.player2) match.player2 = winner;
         else match.player1 = winner;
       } else {
-        if(match.leftChild) recurseOnMatch(match.leftChild);
-        if(match.rightChild) recurseOnMatch(match.rightChild);
+        if (match.leftChild) recurseOnMatch(match.leftChild);
+        if (match.rightChild) recurseOnMatch(match.rightChild);
       }
     }
     recurseOnMatch(this.root);
-  };
+  }
 
   getStats (id) {
     const player = this.players[id];
@@ -121,14 +121,14 @@ class Tournament {
     let playersRank;
     for (let i = 0; i < ranking.length; i++) {
       if (ranking[i].name === player.name) playersRank = i + 1;
-    };
-    return({
+    }
+    return ({
       highest,
       lowest,
       avgScore,
       playersRank,
     });
-  };
+  }
 
   getRanking () {
     const players = this.players;
@@ -140,10 +140,10 @@ class Tournament {
           goals : players[id].goals
         });
       }
-    };
-    return ranking.sort((a, b) => b.goals - a.goals)
-  };
-};
+    }
+    return ranking.sort((a, b) => b.goals - a.goals);
+  }
+}
 
 const findNextPowerOfTwo = num => {
   return Math.pow(2, Math.ceil(Math.log2(num)));
