@@ -5,7 +5,7 @@ class Match {
     this.player2 = undefined;
     this.leftChild = undefined;
     this.rightChild = undefined;
-  };
+  }
 
   sanitise () {
     if (this.leftChild && this.leftChild.player1 === 0) {
@@ -18,11 +18,11 @@ class Match {
     }
     if (this.leftChild !== undefined) this.leftChild.sanitise();
     if (this.rightChild !== undefined) this.rightChild.sanitise();
-  };
+  }
 
   findNextGame () {
     let next;
-    let nextDepth = -1
+    let nextDepth = -1;
     function recurseOnMatch (match, depth = 0) {
       if (match.player1 && match.player2 && depth > nextDepth) {
         nextDepth = depth;

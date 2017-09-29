@@ -19,24 +19,23 @@ class Tournament {
 
   createTournament (callback) {
     const numberOfPlayers = Object.keys(this.players).length;
-    const startingNumber = findNextPowerOfTwo(numberOfPlayers);
-    const numberOfZeros = startingNumber - numberOfPlayers;
+    const numberOfZeros = findNextPowerOfTwo(numberOfPlayers) - numberOfPlayers;
     const playersArr = Object.keys(this.players);
     const matches = [];
     this.playingPlayers = Object.keys(this.players);
 
     for (let i = 0; i < numberOfZeros; i++) {
-      playersArr.splice(i*2, 0, 0)
+      playersArr.splice(i*2, 0, 0);
     }
 
-    for (let i = 0; i < startingNumber; i+=2) {
+    for (let i = 0; i < playersArr.length; i+=2) {
       const match = new Match();
-      match.player1 = playersArr[i]
-      match.player2 = playersArr[i+1]
+      match.player1 = playersArr[i];
+      match.player2 = playersArr[i+1];
       matches.push(match);
-    };
+    }
 
-    let remainingMatches = startingNumber / 2;
+    let remainingMatches = matches.length;
 
     while (remainingMatches > 1) {
       remainingMatches /= 2;
@@ -45,15 +44,15 @@ class Tournament {
         match.leftChild = matches.shift();
         match.rightChild = matches.shift();
         matches.push(match);
-      };
-    };
+      }
+    }
 
     this.root = matches.shift();
     this.root.sanitise();
     createPNG(this.root, this.players, (data) => {
       callback(data)
     });
-  };
+  }
 
   addPlayer (name, id) {
     this.players[id] = {
@@ -62,7 +61,7 @@ class Tournament {
       played: [],
       goals: 0
     };
-  };
+  }
 
   gamePlayed (result, nextGame, callback) {
     const game = nextGame;

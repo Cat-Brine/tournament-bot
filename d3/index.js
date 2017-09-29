@@ -20,7 +20,7 @@ const createPNG = (root, players, callback) => {
   arrayify(root);
 
   printPNG(root, (data) => {
-    callback(data)
+    callback(data);
   });
 };
 

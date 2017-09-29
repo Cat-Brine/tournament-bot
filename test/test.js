@@ -22,8 +22,8 @@ const createMessage = (user, chatId) => {
     date: 1489160360,
     text: '/start',
     entities: [ { type: 'bot_command', offset: 0, length: 6 } ]
-  }
-}
+  };
+};
 
 mocks.forEach(chat => {
   chat.users.forEach((user, index, arr) => {
@@ -39,7 +39,6 @@ describe('Tournament Bot', function ()  {
   beforeEach(function () {
     getChatAdministrators = sinon.stub(bot.telegram, 'getChatAdministrators');
     sendMessage = sinon.stub(bot.telegram, 'sendMessage');
-
   });
 
   afterEach(function () {
@@ -68,7 +67,7 @@ describe('Tournament Bot', function ()  {
       });
     });
 
-    it(`should add multiple tournaments to chatsOpen `, function (done) {
+    it('should add multiple tournaments to chatsOpen', function (done) {
       getChatAdministrators.returns(new Promise((resolve, reject) => resolve(res[1])));
       bot.start(chatAdmins[1]).then(() => {
         bot.chatsOpen.should.have.property(mocks[1].chatId);
@@ -78,18 +77,19 @@ describe('Tournament Bot', function ()  {
   });
 
   describe('register', function () {
-    it('should add a player to the tournament', function () {
+    it('should add a player to the tournament', async function () {
       let tournament;
-      mocks.forEach(chat => {
-        tournament = bot.chatsOpen[chat.chatId]
-        chat.users.forEach(msg => {
-          let userId = msg.from.id
-          bot.register(msg)
-          tournament.players.should.have.property(userId);
-        })
-      })
-      tournament.playing.should.be.false;
-      tournament.registering.should.be.true;
+      for (let i=0; i < mocks.length; i++) {
+        const chat = mocks[i];
+        tournament = bot.chatsOpen[chat.chatId];
+        for (let j=0; j < chat.users.length; j++ ) {
+          const msg = chat.users[j];
+          let userId = msg.from.id;
+          await bot.register(msg);
+          tournament.getPlayer(userId).should.not.be.null;
+        }
+      }
+      tournament.isNew.should.be.true;
     });
   });
 
@@ -100,16 +100,15 @@ describe('Tournament Bot', function ()  {
       chatAdmins.forEach((admin) => {
         const chatId = admin.chat.id;
         tournament = bot.chatsOpen[chatId];
-
         bot.register(admin);
         bot.go(admin);
         const playingPlayers = tournament.playingPlayers.length;
         const players = Object.keys(tournament.players).length;
         tournament.registering.should.be.false;
         tournament.playing.should.be.true;
-
         playingPlayers.should.eql(players);
       });
+
       done();
     });
   });
@@ -133,7 +132,6 @@ describe('Tournament Bot', function ()  {
 
       const expectedWinner = exResultArr[0] > exResultArr[1] ? currGame.player1 : currGame.player2;
       const expectedLoser = exResultArr[0] < exResultArr[1] ? currGame.player1 : currGame.player2;
-
       const player1 = tournament.players[currGame.player1];
       const player2 = tournament.players[currGame.player2];
       const prev_player1_goals = player1.goals;
