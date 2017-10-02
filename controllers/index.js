@@ -11,7 +11,7 @@ const telegram = new TelegramBot(token, {polling: true});
 
 const Tournament = require('../models/tournament.model');
 const Player = require('../models/player.model');
-const MatchModel = require('../models/match.model');
+const Match = require('../models/match.model');
 
 class TournamentBot {
 
@@ -34,7 +34,10 @@ class TournamentBot {
                 first_name: data[0].user.first_name,
               });
               const playing = false;
-              this.chatsOpen[chatId] = new this.Tournament({chatId, admin, playing});
+              const start_date = new Date();
+              const end_date = new Date();
+              end_date.setDate(end_date.getDate() + 10);
+              this.chatsOpen[chatId] = new this.Tournament({chatId, admin, playing, start_date, end_date});
               this.telegram.sendMessage(chatId, response, {parse_mode: 'Markdown'});
             } else if (this.chatsOpen[chatId].playing === true) {
               this.telegram.sendMessage(chatId, messages.alreadyPlaying);
@@ -61,9 +64,7 @@ class TournamentBot {
         const playerCount = tournament.players.length;
         this.telegram.sendMessage(chatId, messages.userRegistered(name, playerCount));
       } else this.telegram.sendMessage(chatId, messages.alreadyRegistered);
-    } else {
-      this.telegram.sendMessage(chatId, messages.registrationClosed);
-    }
+    } else this.telegram.sendMessage(chatId, messages.registrationClosed);
   }
 
   go (msg) {
@@ -71,22 +72,18 @@ class TournamentBot {
     const tournament = this.chatsOpen[chatId];
     const user = msg.from;
     const username = msg.from.first_name;
-    const chatAdmin = tournament.chatAdmin;
+    const admin = tournament.admin;
     if (tournament) {
-      if (chatAdmin.id === user.id) {
+      if (tournament.admin.telegram_id === user.id) {
         if (!tournament.playing) {
-          const playerCount = Object.keys(tournament.players).length;
+          const playerCount = tournament.players.length;
           if (playerCount >= 4) {
-            tournament.registering = false;
             tournament.playing = true;
+            // oldTournament.createTournament((png) => {
+            //   this.telegram.sendPhoto(chatId, png);
+            // });
+            Tournament.createTournament(tournament);
             this.telegram.sendMessage(chatId, messages.newTournament(playerCount));
-
-            oldTournament.createTournament((png) => {
-              this.telegram.sendPhoto(chatId, png);
-            });
-            const {players} = tournament;
-            const date = Date.now();
-            Tournament.createTournament({chatAdmin, players, date, chatId});
           } else this.telegram.sendMessage(chatId, messages.notEnoughPlayers(playerCount));
         } else this.telegram.sendMessage(chatId, messages.alreadyPlaying);
       } else this.telegram.sendMessage(chatId, messages.notAdmin(chatAdmin.name));
@@ -108,7 +105,7 @@ class TournamentBot {
         const player2 = tournament.players[nextGame.player2].name;
         const tournamentId = Tournament.search(chatId);
         // const tournamentId = Tournament.schema.statics.search(chatId);
-        // MatchModel.createMatch({player1, player2, tournament});
+        // Match.createMatch({player1, player2, tournament});
         this.telegram.sendMessage(chatId, `${messages.game(player1, player2)}`);
       } else this.telegram.sendMessage(chatId, messages.notAdmin(chatAdmin.name));
     } else this.telegram.sendMessage(chatId, messages.notPlaying);

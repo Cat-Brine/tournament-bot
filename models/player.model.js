@@ -1,27 +1,26 @@
 const TelegramBot = require('node-telegram-bot-api');
 const mongoose = require('../db.js');
 
-const playerSchema = new mongoose.Schema({
+const PlayerSchema = new mongoose.Schema({
   telegram_id: Number,
   first_name: String,
-  tournament_id: Object,
 });
 
-const Player = mongoose.model('player', playerSchema);
+const Player = mongoose.model('player', PlayerSchema);
 
-Player.createPlayer = async playerInfo => {
+Player.createPlayer = playerInfo => {
+  const { telegram_id, first_name } = playerInfo;
   const newPlayer = new Player({
-    telegram_id: playerInfo.playerId,
-    first_name: playerInfo.name
+    telegram_id,
+    first_name,
   });
   return newPlayer.save();
 };
 
-Player.findOrCreate = async playerInfo => {
-  const player = Player.findOne({telegram_id: playerId});
-  if (!player) {
-    return Player.createPlayer(playerInfo);
-  }
+Player.findOrCreate = playerInfo => {
+  const { telegram_id } = playerInfo;
+  const player = Player.findOne({telegram_id});
+  if (!player) return Player.createPlayer(playerInfo);
   return player;
 };
 

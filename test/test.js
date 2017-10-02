@@ -43,11 +43,13 @@ describe('Tournament Bot', function ()  {
 
   afterEach(function () {
     getChatAdministrators.restore();
-    sendMessage.restore()
+    sendMessage.restore();
   });
 
   describe('start', function () {
-    const chatAdmins = mocks.map(chat => chat.users[0]);
+    const chatAdmins = mocks.map(chat => {
+      return chat.users[0];
+    });
     const res = chatAdmins.map(admin => {
       return [{
         user: {
@@ -56,10 +58,10 @@ describe('Tournament Bot', function ()  {
           username: admin.from.username,
         },
         status: 'creator'
-      }]
+      }];
     });
 
-    it(`should add 1 tournament to chatsOpen`, function (done) {
+    it ('should add 1 tournament to chatsOpen', function (done) {
       getChatAdministrators.returns(new Promise((resolve, reject) => resolve(res[0])));
       bot.start(chatAdmins[0]).then(() => {
         bot.chatsOpen.should.have.property(mocks[0].chatId);
@@ -94,21 +96,18 @@ describe('Tournament Bot', function ()  {
   });
 
   describe('go', function () {
-
     it('should start a tournament with 4 players or more', function (done) {
       let tournament;
       chatAdmins.forEach((admin) => {
         const chatId = admin.chat.id;
         tournament = bot.chatsOpen[chatId];
-        bot.register(admin);
         bot.go(admin);
+        console.log(tournament);
         const playingPlayers = tournament.playingPlayers.length;
         const players = Object.keys(tournament.players).length;
-        tournament.registering.should.be.false;
         tournament.playing.should.be.true;
         playingPlayers.should.eql(players);
       });
-
       done();
     });
   });

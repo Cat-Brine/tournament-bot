@@ -1,8 +1,8 @@
 const mongoose = require('../db.js');
 const _ = require('underscore');
-
 const TelegramBot = require('node-telegram-bot-api');
 const Player = require('./player.model');
+const Match = require('./match.model');
 
 const findNextPowerOfTwo = num => Math.pow(2, Math.ceil(Math.log2(num)));
 
@@ -11,29 +11,35 @@ const TournamentSchema = new mongoose.Schema({
   chatId: Number,
   start_date: Date,
   end_date: Date,
-  games: Array,
   playing: Boolean,
-  players: [{type: mongoose.Schema.Types.ObjectId, ref: 'player', default: [] }],
-  playingPlayers: [{type: mongoose.Schema.Types.ObjectId, ref: 'player', default: [] }],
-  root: { type: mongoose.Schema.Types.ObjectId, ref: 'match' },
+  players: [{type: mongoose.Schema.Types.ObjectId, ref: 'player', default: []}],
+  playingPlayers: [{type: mongoose.Schema.Types.ObjectId, ref: 'player', default: []}],
+  matches: Array,
+  root: {type: mongoose.Schema.Types.ObjectId, ref: 'match', default: null},
 });
 
-TournamentSchema.methods.createMatches = function () {
-  const playersArr = Object.keys(this.players);
+TournamentSchema.methods.createMatches = async function () {
+  const playersArr = this.players;
   const numberOfPlayers = playersArr.length;
   const numberOfZeros = findNextPowerOfTwo(numberOfPlayers) - numberOfPlayers;
+  const tournament = this;
+  const tournamentId = this._id;
   const matches = [];
+  const score = {
+    player1: 0,
+    player2: 0
+  };
   this.playingPlayers = this.players;
 
-  for (let i = 0; i < numberOfZeros; i++) {
-    playersArr.splice(i*2, 0, 0);
-  }
+  for (let i = 0; i < numberOfZeros; i++) playersArr.splice(i*2, 0, 0);
 
   for (let i = 0; i < playersArr.length; i+=2) {
-    const match = new Match();
-    match.player1 = playersArr[i];
-    match.player2 = playersArr[i+1];
+    const player1 = playersArr[i];
+    const player2 = playersArr[i+1];
+    const match = new Match({tournamentId, player1, player2, score});
+    await match.save();
     matches.push(match);
+    this.matches.push(match._id);
   }
 
   let remainingMatches = matches.length;
@@ -41,15 +47,18 @@ TournamentSchema.methods.createMatches = function () {
   while (remainingMatches > 1) {
     remainingMatches /= 2;
     for (let i = 0; i < remainingMatches; i++) {
-      const match = new Match();
-      match.leftChild = matches.shift();
-      match.rightChild = matches.shift();
+      const leftChild = matches.shift();
+      const rightChild = matches.shift();
+      const match = new Match({tournamentId, leftChild, rightChild, score});
+      await match.save();
       matches.push(match);
+      this.matches.push(match._id);
     }
   }
-
   this.root = matches.shift();
-  this.root.sanitise();
+  console.log('in tournament model ',this);
+  // this.root.schema.methods.sanitise.call(this);
+  return this;
 };
 
 TournamentSchema.methods.getPlayer = function (userId) {
@@ -62,32 +71,14 @@ TournamentSchema.methods.addPlayer = function (player) {
 
 const Tournament = mongoose.model('tournament', TournamentSchema);
 
-Tournament.createTournament = async tournamentInfo => {
-  const {chatAdmin, players , date, chatId} = tournamentInfo;
-  const playersArr = _.reduce(players, (accum, val, key, collection) => {
-    accum.push({playerId: key, name:val.name});
-    return accum;
-  }, []);
-  const admin = await Player.findOne({telegram_id: chatAdmin.id});
-
-  const tournamentPlayers = await Promise.all(playersArr.map(player => Player.findOrCreate(item)));
-
-  const newTournament = new Tournament({
-    admin: admin,
-    chatId,
-    start_date: date,
-    end_date: null,
-    games: [],
-    playing: false,
-    players: tournamentPlayers,
-  });
-  newTournament.createMatches();
-  await newTournament.save();
-  return newTournament;
+Tournament.createTournament = async tournament => {
+  const { players } = tournament;
+  const tournamentPlayers = await Promise.all(players.map(player => {
+    return Player.findOrCreate(player);
+  }));
+  tournament.start_date = new Date();
+  const tournamentWithMatches = await tournament.createMatches();
+  return await tournamentWithMatches.save();
 };
-
-// Tournament.search = async function search (chatId) {
-//   return await Tournament.find({chatId}).sort({date}).limit(1);
-// };
 
 module.exports = Tournament;
