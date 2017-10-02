@@ -14,17 +14,31 @@ const MatchSchema = new mongoose.Schema({
 const Match = mongoose.model('match', MatchSchema);
 
 MatchSchema.methods.sanitise = function () {
-  const root = this.root;
-  if (root.leftChild && root.leftChild.player1 === 0) {
-    if (root.player1 === undefined) root.player1 = root.leftChild.player2;
-    else root.player2 = root.leftChild.player2;
+  if (this.leftChild && this.leftChild.player1 === 0) {
+    if (this.player1 === undefined) this.player1 = this.leftChild.player2;
+    else this.player2 = this.leftChild.player2;
   }
-  if (root.rightChild && root.rightChild.player1 === 0) {
-    if (root.player1 === undefined) root.player1 = root.rightChild.player2;
-    else root.player2 = root.rightChild.player2;
+  if (this.rightChild && this.rightChild.player1 === 0) {
+    if (this.player1 === undefined) this.player1 = this.rightChild.player2;
+    else this.player2 = this.rightChild.player2;
   }
-  if (root.leftChild !== undefined) root.leftChild.sanitise();
-  if (root.rightChild !== undefined) root.rightChild.sanitise();
+  if (this.leftChild !== undefined) this.leftChild.schema.methods.sanitise.call(this.leftChild);
+  if (this.rightChild !== undefined) this.rightChild.schema.methods.sanitise.call(this.rightChild);
+};
+
+MatchSchema.methods.findNextGame = function () {
+  let next;
+  let nextDepth = -1;
+  function recurseOnMatch (match, depth = 0) {
+    if (match.player1 && match.player2 && depth > nextDepth) {
+      nextDepth = depth;
+      next = match;
+    }
+    if (!match.player1 && match.leftChild) recurseOnMatch(match.leftChild, depth + 1 );
+    if (!match.player2 && match.rightChild) recurseOnMatch(match.rightChild, depth + 1);
+  }
+  recurseOnMatch(this);
+  return next;
 };
 
 module.exports = Match;

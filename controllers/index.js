@@ -56,7 +56,11 @@ class TournamentBot {
       telegram_id: userId,
       first_name: name,
     });
-    await player.save();
+    try {
+      await player.save();
+    } catch (e) {
+      console.log(e);
+    }
     const tournament = this.chatsOpen[chatId];
     if (tournament && tournament.isNew) {
       if (!tournament.getPlayer(player.telegram_id)) {
@@ -82,7 +86,11 @@ class TournamentBot {
             // oldTournament.createTournament((png) => {
             //   this.telegram.sendPhoto(chatId, png);
             // });
-            await Tournament.createTournament(tournament);
+            try {
+              await Tournament.createTournament(tournament);
+            } catch (e) {
+              console.log(e);
+            }
             this.telegram.sendMessage(chatId, messages.newTournament(playerCount));
           } else this.telegram.sendMessage(chatId, messages.notEnoughPlayers(playerCount));
         } else this.telegram.sendMessage(chatId, messages.alreadyPlaying);
@@ -91,7 +99,6 @@ class TournamentBot {
   }
 
   game (msg) {
-    // Try/catch
     const chatId = msg.chat.id;
     const user = msg.from;
     const username = user.first_name;

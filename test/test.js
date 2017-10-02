@@ -115,7 +115,6 @@ describe('Tournament Bot', function ()  {
     const chatAdmins = mocks.map(chat => chat.users[0]);
     const correctMatch = [ '/result 1-2', '1-2', 'index: 0', 'input: /result 1-2' ];
     it('should update the current game with the scores and winner', function () {
-
       const expectedResult = correctMatch[1];
       const exResultArr = expectedResult.split('-').map(el => +el);
       const winningScore = Math.max.apply(null, exResultArr);

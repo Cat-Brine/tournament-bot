@@ -57,8 +57,8 @@ TournamentSchema.methods.createMatches = async function () {
     }
   }
   this.root = matches.shift();
-  // console.log('in tournament model ', this);
-  // this.root.schema.methods.sanitise.call(this);
+  // this.root.schema.methods.sanitise();
+  this.root.schema.methods.sanitise.call(this.root);
   return this;
 };
 
