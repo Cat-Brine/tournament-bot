@@ -68,7 +68,6 @@ describe('Tournament Bot', function ()  {
         done();
       });
     });
-
     it('should add multiple tournaments to chatsOpen', function (done) {
       getChatAdministrators.returns(new Promise((resolve, reject) => resolve(res[1])));
       bot.start(chatAdmins[1]).then(() => {
@@ -92,23 +91,22 @@ describe('Tournament Bot', function ()  {
         }
       }
       tournament.isNew.should.be.true;
+
     });
   });
 
   describe('go', function () {
-    it('should start a tournament with 4 players or more', function (done) {
-      let tournament;
-      chatAdmins.forEach((admin) => {
+    it('should start a tournament with 4 players or more', async () => {
+      await Promise.all(chatAdmins.map(async (admin) => {
         const chatId = admin.chat.id;
-        tournament = bot.chatsOpen[chatId];
-        bot.go(admin);
-        console.log(tournament);
+        const tournament = bot.chatsOpen[chatId];
+        await bot.go(admin);
         const playingPlayers = tournament.playingPlayers.length;
-        const players = Object.keys(tournament.players).length;
+        const players = tournament.players.length;
+        // console.log('in the go test', tournament);
         tournament.playing.should.be.true;
         playingPlayers.should.eql(players);
-      });
-      done();
+      }));
     });
   });
 

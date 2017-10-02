@@ -31,11 +31,12 @@ TournamentSchema.methods.createMatches = async function () {
   };
   this.playingPlayers = this.players;
 
-  for (let i = 0; i < numberOfZeros; i++) playersArr.splice(i*2, 0, 0);
+  const playersTempArr = playersArr.concat();
+  for (let i = 0; i < numberOfZeros; i++) playersTempArr.splice(i*2, 0, null);
 
-  for (let i = 0; i < playersArr.length; i+=2) {
-    const player1 = playersArr[i];
-    const player2 = playersArr[i+1];
+  for (let i = 0; i < playersTempArr.length; i+=2) {
+    const player1 = playersTempArr[i];
+    const player2 = playersTempArr[i+1];
     const match = new Match({tournamentId, player1, player2, score});
     await match.save();
     matches.push(match);
@@ -56,7 +57,7 @@ TournamentSchema.methods.createMatches = async function () {
     }
   }
   this.root = matches.shift();
-  console.log('in tournament model ',this);
+  // console.log('in tournament model ', this);
   // this.root.schema.methods.sanitise.call(this);
   return this;
 };

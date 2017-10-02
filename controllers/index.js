@@ -67,7 +67,7 @@ class TournamentBot {
     } else this.telegram.sendMessage(chatId, messages.registrationClosed);
   }
 
-  go (msg) {
+  async go (msg) {
     const chatId = msg.chat.id;
     const tournament = this.chatsOpen[chatId];
     const user = msg.from;
@@ -82,7 +82,7 @@ class TournamentBot {
             // oldTournament.createTournament((png) => {
             //   this.telegram.sendPhoto(chatId, png);
             // });
-            Tournament.createTournament(tournament);
+            await Tournament.createTournament(tournament);
             this.telegram.sendMessage(chatId, messages.newTournament(playerCount));
           } else this.telegram.sendMessage(chatId, messages.notEnoughPlayers(playerCount));
         } else this.telegram.sendMessage(chatId, messages.alreadyPlaying);
