@@ -10,8 +10,8 @@ const MatchSchema = new mongoose.Schema({
   rightChild: {type: mongoose.Schema.Types.ObjectId, ref: 'match'},
   score: { type: Object, default: null },
   playing: Boolean,
-  winner: String,
-  loser: String,
+  winner: {type: mongoose.Schema.Types.ObjectId, ref: 'player'},
+  loser: {type: mongoose.Schema.Types.ObjectId, ref: 'player'},
 });
 
 MatchSchema.methods.sanitise = function () {
@@ -30,8 +30,9 @@ MatchSchema.methods.sanitise = function () {
 MatchSchema.methods.findNextGame = function () {
   let next;
   let nextDepth = -1;
+
   function recurseOnMatch (match, depth = 0) {
-    if (match.player1 && match.player2 && depth > nextDepth) {
+    if (match.player1 && match.player2 && match.score === null && depth > nextDepth) {
       nextDepth = depth;
       next = match;
     }
@@ -63,6 +64,47 @@ MatchSchema.methods.render = function (prefix = '', indentation = 0) {
     this.rightChild.render(`${indentationString}┣   `, indentation+1);
   }
 };
+
+MatchSchema.methods.placeInNextGame = async function (winner) {
+  // if (!this.player2 && this.rightChild
+  //   && this.rightChild.player2
+  //   && this.rightChild.player2.telegram_id === 23121936
+  //   && winner.telegram_id === 23121936) {
+  //   console.log('MATCH', !this.player2, !!this.rightChild, !!this.rightChild.winner, this.rightChild.winner.telegram_id === winner.telegram_id);
+  // }
+
+  if (
+    !this.player1 && this.leftChild && this.leftChild.winner
+    && this.leftChild.winner.telegram_id === winner.telegram_id
+  ) {
+    this.player1 = winner;
+    await this.save();
+  } else if (
+    !this.player2 && this.rightChild && this.rightChild.winner
+    && this.rightChild.winner.telegram_id === winner.telegram_id
+  ) {
+    this.player2 = winner;
+    await this.save();
+  } else {
+    if (this.leftChild) await this.leftChild.placeInNextGame(winner);
+    if (this.rightChild) await this.rightChild.placeInNextGame(winner);
+  }
+};
+
+const autoPopulate = function (next) {
+  this
+    .populate('player1')
+    .populate('player2')
+    .populate('leftChild')
+    .populate('rightChild')
+    .populate('winner')
+    .populate('loser');
+  next();
+};
+
+MatchSchema
+  .pre('findOne', autoPopulate)
+  .pre('find', autoPopulate);
 
 const Match = mongoose.model('match', MatchSchema);
 

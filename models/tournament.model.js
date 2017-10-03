@@ -35,8 +35,8 @@ TournamentSchema.methods.createMatches = async function () {
     const player1 = playersTempArr[i];
     const player2 = playersTempArr[i+1];
     const playing = false;
-    const winner = 'undefined';
-    const loser = 'undefined';
+    const winner = null;
+    const loser = null;
     const match = new Match({tournamentId, player1, player2, score, playing, winner, loser});
     await match.save();
     matches.push(match);
@@ -51,8 +51,8 @@ TournamentSchema.methods.createMatches = async function () {
       const leftChild = matches.shift();
       const rightChild = matches.shift();
       const playing = false;
-      const winner = 'undefined';
-      const loser = 'undefined';
+      const winner = null;
+      const loser = null;
       const match = new Match({tournamentId, leftChild, rightChild, score, playing, winner, loser});
       await match.save();
       matches.push(match);
@@ -71,6 +71,19 @@ TournamentSchema.methods.getPlayer = function (userId) {
 TournamentSchema.methods.addPlayer = function (player) {
   this.players.push(player);
 };
+
+const autoPopulate = function (next) {
+  this
+    .populate('admin')
+    .populate('playingPlayers')
+    .populate('root')
+    .populate('players');
+  next();
+};
+
+TournamentSchema
+  .pre('findOne', autoPopulate)
+  .pre('find', autoPopulate);
 
 const Tournament = mongoose.model('tournament', TournamentSchema);
 

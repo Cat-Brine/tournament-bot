@@ -108,7 +108,7 @@ class TournamentBot {
     const chatAdmin = tournament.admin;
     if (tournament && tournament.playing) {
       if (user.id === chatAdmin.telegram_id) {
-        const nextGame = tournament.root.schema.methods.findNextGame.call(tournament.root);
+        const nextGame = tournament.root.findNextGame();
         nextGame.playing = true;
         const player1 = nextGame.player1.first_name;
         const player2 = nextGame.player2.first_name;
@@ -122,9 +122,9 @@ class TournamentBot {
   async result (msg, match) {
     const chatId = msg.chat.id;
     const user = msg.from;
-    const tournament = this.chatsOpen[chatId];
+    let tournament = this.chatsOpen[chatId];
     const chatAdmin = tournament.admin;
-    const nextGame = tournament.root.schema.methods.findNextGame.call(tournament.root);
+    const nextGame = tournament.root.findNextGame();
     if (user.id === chatAdmin.telegram_id) {
       if (tournament.playing) {
         const result = match[1];
@@ -138,15 +138,16 @@ class TournamentBot {
               player1: result[0],
               player2: result[2],
             };
-            nextGame.playing = false;
-            const winner = nextGame.score.player1 > nextGame.score.player2 ? nextGame.player1.first_name : nextGame.player2.first_name;
-            const loser = nextGame.score.player1 > nextGame.score.player2 ? nextGame.player2.first_name : nextGame.player1.first_name;
+            const winner = nextGame.score.player1 > nextGame.score.player2 ? nextGame.player1 : nextGame.player2;
+            const loser = nextGame.score.player1 > nextGame.score.player2 ? nextGame.player2 : nextGame.player1;
             nextGame.winner = winner;
             nextGame.loser = loser;
             const player1UpdatedGoals = await Player.updatedScore(nextGame.player1.telegram_id, nextGame.score.player1);
             const player2UpdatedGoals = await Player.updatedScore(nextGame.player2.telegram_id, nextGame.score.player2);
-            nextGame.player1 = player1UpdatedGoals;
-            nextGame.player2 = player2UpdatedGoals;
+            await tournament.root.placeInNextGame(winner);
+            nextGame.playing = false;
+            await nextGame.save();
+
             if (tournament.root === nextGame) {
               this.telegram.sendMessage(chatId, messages.overallWinner(winner));
               tournament.playing = false;

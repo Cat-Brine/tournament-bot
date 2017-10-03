@@ -122,8 +122,8 @@ describe('Tournament Bot', function ()  {
       const chatId = msgFromAdmin.chat.id;
       const tournament = bot.chatsOpen[chatId];
       const currGame = tournament.root.findNextGame();
-      const expectedWinner = exResultArr[0] > exResultArr[1] ? currGame.player1.first_name : currGame.player2.first_name;
-      const expectedLoser = exResultArr[0] < exResultArr[1] ? currGame.player1.first_name : currGame.player2.first_name;
+      const expectedWinner = exResultArr[0] > exResultArr[1] ? currGame.player1 : currGame.player2;
+      const expectedLoser = exResultArr[0] < exResultArr[1] ? currGame.player1 : currGame.player2;
 
       let player1 = tournament.players.filter(player => {
         if (player.first_name === currGame.player1.first_name) return player;
@@ -146,11 +146,11 @@ describe('Tournament Bot', function ()  {
       const actualWinner = currGame.winner;
       const actualLoser = currGame.loser;
 
-      const new_player1_goals = expectedWinner === currGame.player1.first_name ?
+      const new_player1_goals = expectedWinner === currGame.player1 ?
         winningScore + prev_player1_goals :
         losingScore + prev_player1_goals;
       player1.goals = new_player1_goals;
-      const new_player2_goals = expectedWinner === currGame.player2.first_name ?
+      const new_player2_goals = expectedWinner === currGame.player2 ?
         winningScore + prev_player2_goals :
         losingScore + prev_player2_goals;
       player2.goals = new_player2_goals;
@@ -180,7 +180,7 @@ describe('Tournament Bot', function ()  {
 
     });
 
-    it('should add the winner of the previous match to the next game', function () {
+    it('should add the winner of the previous match to the next game', async function () {
       const msgFromAdmin = chatAdmins[1];
       const chatId = msgFromAdmin.chat.id;
       const tournament = bot.chatsOpen[chatId];
@@ -190,9 +190,9 @@ describe('Tournament Bot', function ()  {
       currGame.player1.telegram_id.should.eql(23121935);
       currGame.player2.telegram_id.should.eql(23121936);
 
-      bot.go(msgFromAdmin);
+      await bot.go(msgFromAdmin);
       bot.game(msgFromAdmin);
-      bot.result(msgFromAdmin, correctMatch);
+      await bot.result(msgFromAdmin, correctMatch);
 
       let nextGame = tournament.root.findNextGame();
 
@@ -200,11 +200,23 @@ describe('Tournament Bot', function ()  {
       should.not.equal(nextGame.player1, undefined);
       should.not.equal(nextGame.player2, undefined);
 
-      nextGame.player1.telegram_id.should.eql(23121931)
-      nextGame.player2.telegram_id.should.eql(23121932)
+      nextGame.player1.telegram_id.should.eql(23121931);
+      nextGame.player2.telegram_id.should.eql(23121932);
 
       bot.game(msgFromAdmin);
-      bot.result(msgFromAdmin, correctMatch);
+      await bot.result(msgFromAdmin, correctMatch);
+      
+      nextGame = tournament.root.findNextGame();
+
+      should.not.equal(nextGame, undefined);
+      should.not.equal(nextGame.player1, undefined);
+      should.not.equal(nextGame.player2, undefined);
+
+      nextGame.player1.telegram_id.should.eql(23121933);
+      nextGame.player2.telegram_id.should.eql(23121936);
+
+      await bot.game(msgFromAdmin);
+      await bot.result(msgFromAdmin, correctMatch);
 
       nextGame = tournament.root.findNextGame();
 
@@ -212,25 +224,13 @@ describe('Tournament Bot', function ()  {
       should.not.equal(nextGame.player1, undefined);
       should.not.equal(nextGame.player2, undefined);
 
-      nextGame.player1.should.eql('23121933')
-      nextGame.player2.should.eql('23121936')
+      nextGame.player1.telegram_id.should.eql(23121932);
+      nextGame.player2.telegram_id.should.eql(23121936);
 
-      bot.game(msgFromAdmin);
-      bot.result(msgFromAdmin, correctMatch);
+      await bot.game(msgFromAdmin);
+      await bot.result(msgFromAdmin, correctMatch);
 
-      nextGame = tournament.root.findNextGame();
-
-      should.not.equal(nextGame, undefined);
-      should.not.equal(nextGame.player1, undefined);
-      should.not.equal(nextGame.player2, undefined);
-
-      nextGame.player1.should.eql('23121932')
-      nextGame.player2.should.eql('23121936')
-
-      bot.game(msgFromAdmin);
-      bot.result(msgFromAdmin, correctMatch);
-
-      nextGame.winner.should.equal('23121936')
+      nextGame.winner.telegram_id.should.equal(23121936);
     });
 
   });
