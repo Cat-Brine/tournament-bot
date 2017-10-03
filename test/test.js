@@ -121,7 +121,7 @@ describe('Tournament Bot', function ()  {
       const msgFromAdmin = chatAdmins[0];
       const chatId = msgFromAdmin.chat.id;
       const tournament = bot.chatsOpen[chatId];
-      const currGame = tournament.root.schema.methods.findNextGame.call(tournament.root);
+      const currGame = tournament.root.findNextGame();
       const expectedWinner = exResultArr[0] > exResultArr[1] ? currGame.player1.first_name : currGame.player2.first_name;
       const expectedLoser = exResultArr[0] < exResultArr[1] ? currGame.player1.first_name : currGame.player2.first_name;
 
@@ -170,7 +170,7 @@ describe('Tournament Bot', function ()  {
       const username = msgFromAdmin.from.username;
       const chatId = msgFromAdmin.chat.id;
       const tournament = bot.chatsOpen[chatId];
-      const currGame = tournament.root.schema.methods.findNextGame.call(tournament.root);
+      const currGame = tournament.root.findNextGame();
 
       bot.go(msgFromAdmin);
       bot.game(msgFromAdmin);
@@ -185,7 +185,7 @@ describe('Tournament Bot', function ()  {
       const chatId = msgFromAdmin.chat.id;
       const tournament = bot.chatsOpen[chatId];
 
-      const currGame = tournament.root.schema.methods.findNextGame.call(tournament.root);
+      const currGame = tournament.root.findNextGame();
 
       currGame.player1.telegram_id.should.eql(23121935);
       currGame.player2.telegram_id.should.eql(23121936);

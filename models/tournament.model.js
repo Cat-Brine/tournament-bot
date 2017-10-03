@@ -63,7 +63,7 @@ TournamentSchema.methods.createMatches = async function () {
     }
   }
   this.root = matches.shift();
-  this.root.schema.methods.sanitise.call(this.root);
+  this.root.sanitise();
   return this;
 };
 

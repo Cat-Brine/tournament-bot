@@ -14,8 +14,6 @@ const MatchSchema = new mongoose.Schema({
   loser: String,
 });
 
-const Match = mongoose.model('match', MatchSchema);
-
 MatchSchema.methods.sanitise = function () {
   if (this.leftChild && this.leftChild.player1 === 0) {
     if (this.player1 === undefined) this.player1 = this.leftChild.player2;
@@ -43,5 +41,7 @@ MatchSchema.methods.findNextGame = function () {
   recurseOnMatch(this);
   return next;
 };
+
+const Match = mongoose.model('match', MatchSchema);
 
 module.exports = Match;
