@@ -103,7 +103,6 @@ describe('Tournament Bot', function ()  {
         await bot.go(admin);
         const playingPlayers = tournament.playingPlayers.length;
         const players = tournament.players.length;
-        // console.log('in the go test', tournament);
         tournament.playing.should.be.true;
         playingPlayers.should.eql(players);
       }));
@@ -119,38 +118,44 @@ describe('Tournament Bot', function ()  {
       const exResultArr = expectedResult.split('-').map(el => +el);
       const winningScore = Math.max.apply(null, exResultArr);
       const losingScore = Math.min.apply(null, exResultArr);
-
       const msgFromAdmin = chatAdmins[0];
       const chatId = msgFromAdmin.chat.id;
       const tournament = bot.chatsOpen[chatId];
+      const currGame = tournament.root.schema.methods.findNextGame.call(tournament.root);
+      const expectedWinner = exResultArr[0] > exResultArr[1] ? currGame.player1.first_name : currGame.player2.first_name;
+      const expectedLoser = exResultArr[0] < exResultArr[1] ? currGame.player1.first_name : currGame.player2.first_name;
 
-      const currGame = tournament.root.findNextGame();
+      let player1 = tournament.players.filter(player => {
+        if (player.first_name === currGame.player1.first_name) return player;
+      });
+      player1 = player1[0];
+      let player2 = tournament.players.filter(player => {
+        if (player.first_name === currGame.player2.first_name) return player;
+      });
+      player2 = player2[0];
 
-      const expectedWinner = exResultArr[0] > exResultArr[1] ? currGame.player1 : currGame.player2;
-      const expectedLoser = exResultArr[0] < exResultArr[1] ? currGame.player1 : currGame.player2;
-      const player1 = tournament.players[currGame.player1];
-      const player2 = tournament.players[currGame.player2];
       const prev_player1_goals = player1.goals;
       const prev_player2_goals = player2.goals;
-
       bot.go(msgFromAdmin);
       bot.result(msgFromAdmin, correctMatch);
-      should.equal(currGame.result, undefined)
+      should.equal(currGame.result, undefined);
       bot.game(msgFromAdmin);
       bot.result(msgFromAdmin, correctMatch);
 
-      const actualResult = currGame.result.join('-');
+      const actualResult = `${currGame.score.player1}-${currGame.score.player2}`;
       const actualWinner = currGame.winner;
       const actualLoser = currGame.loser;
 
-      const new_player1_goals = expectedWinner === currGame.player1 ?
-      winningScore + prev_player1_goals :
-      losingScore + prev_player1_goals
-      const new_player2_goals = expectedWinner === currGame.player2 ?
-      winningScore + prev_player2_goals :
-      losingScore + prev_player2_goals
+      const new_player1_goals = expectedWinner === currGame.player1.first_name ?
+        winningScore + prev_player1_goals :
+        losingScore + prev_player1_goals;
+      player1.goals = new_player1_goals;
+      const new_player2_goals = expectedWinner === currGame.player2.first_name ?
+        winningScore + prev_player2_goals :
+        losingScore + prev_player2_goals;
+      player2.goals = new_player2_goals;
 
-      should.not.equal(currGame.result, undefined)
+      should.not.equal(currGame.score, undefined);
       actualResult.should.be.eql(expectedResult);
       actualWinner.should.be.eql(expectedWinner);
       actualLoser.should.be.eql(expectedLoser);
@@ -165,7 +170,7 @@ describe('Tournament Bot', function ()  {
       const username = msgFromAdmin.from.username;
       const chatId = msgFromAdmin.chat.id;
       const tournament = bot.chatsOpen[chatId];
-      const currGame = tournament.root.findNextGame()
+      const currGame = tournament.root.schema.methods.findNextGame.call(tournament.root);
 
       bot.go(msgFromAdmin);
       bot.game(msgFromAdmin);
@@ -180,14 +185,17 @@ describe('Tournament Bot', function ()  {
       const chatId = msgFromAdmin.chat.id;
       const tournament = bot.chatsOpen[chatId];
 
-      const currGame = tournament.root.findNextGame();
+      const currGame = tournament.root.schema.methods.findNextGame.call(tournament.root);
 
-      currGame.player1.should.eql('23121935')
-      currGame.player2.should.eql('23121936')
+      currGame.player1.telegram_id.should.eql(23121935);
+      currGame.player2.telegram_id.should.eql(23121936);
 
       bot.go(msgFromAdmin);
       bot.game(msgFromAdmin);
       bot.result(msgFromAdmin, correctMatch);
+
+
+      // UP TO HERE
 
       let nextGame = tournament.root.findNextGame();
 

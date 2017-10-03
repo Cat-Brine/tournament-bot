@@ -9,6 +9,9 @@ const MatchSchema = new mongoose.Schema({
   leftChild: {type: mongoose.Schema.Types.ObjectId, ref: 'match'},
   rightChild: {type: mongoose.Schema.Types.ObjectId, ref: 'match'},
   score: Object,
+  playing: Boolean,
+  winner: String,
+  loser: String,
 });
 
 const Match = mongoose.model('match', MatchSchema);

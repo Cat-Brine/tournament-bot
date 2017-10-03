@@ -37,7 +37,10 @@ TournamentSchema.methods.createMatches = async function () {
   for (let i = 0; i < playersTempArr.length; i+=2) {
     const player1 = playersTempArr[i];
     const player2 = playersTempArr[i+1];
-    const match = new Match({tournamentId, player1, player2, score});
+    const playing = false;
+    const winner = 'undefined';
+    const loser = 'undefined';
+    const match = new Match({tournamentId, player1, player2, score, playing, winner, loser});
     await match.save();
     matches.push(match);
     this.matches.push(match._id);
@@ -50,14 +53,16 @@ TournamentSchema.methods.createMatches = async function () {
     for (let i = 0; i < remainingMatches; i++) {
       const leftChild = matches.shift();
       const rightChild = matches.shift();
-      const match = new Match({tournamentId, leftChild, rightChild, score});
+      const playing = false;
+      const winner = 'undefined';
+      const loser = 'undefined';
+      const match = new Match({tournamentId, leftChild, rightChild, score, playing, winner, loser});
       await match.save();
       matches.push(match);
       this.matches.push(match._id);
     }
   }
   this.root = matches.shift();
-  // this.root.schema.methods.sanitise();
   this.root.schema.methods.sanitise.call(this.root);
   return this;
 };
