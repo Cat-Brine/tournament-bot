@@ -8,23 +8,23 @@ const MatchSchema = new mongoose.Schema({
   player2: {type: mongoose.Schema.Types.ObjectId, ref: 'player'},
   leftChild: {type: mongoose.Schema.Types.ObjectId, ref: 'match'},
   rightChild: {type: mongoose.Schema.Types.ObjectId, ref: 'match'},
-  score: Object,
+  score: { type: Object, default: null },
   playing: Boolean,
   winner: String,
   loser: String,
 });
 
 MatchSchema.methods.sanitise = function () {
-  if (this.leftChild && this.leftChild.player1 === 0) {
+  if (this.leftChild && this.leftChild.player1 === null) {
     if (this.player1 === undefined) this.player1 = this.leftChild.player2;
     else this.player2 = this.leftChild.player2;
   }
-  if (this.rightChild && this.rightChild.player1 === 0) {
+  if (this.rightChild && this.rightChild.player1 === null) {
     if (this.player1 === undefined) this.player1 = this.rightChild.player2;
     else this.player2 = this.rightChild.player2;
   }
-  if (this.leftChild !== undefined) this.leftChild.schema.methods.sanitise.call(this.leftChild);
-  if (this.rightChild !== undefined) this.rightChild.schema.methods.sanitise.call(this.rightChild);
+  if (this.leftChild !== undefined) this.leftChild.sanitise();
+  if (this.rightChild !== undefined) this.rightChild.sanitise();
 };
 
 MatchSchema.methods.findNextGame = function () {
@@ -40,6 +40,28 @@ MatchSchema.methods.findNextGame = function () {
   }
   recurseOnMatch(this);
   return next;
+};
+
+MatchSchema.methods.render = function (prefix = '', indentation = 0) {
+  //eslint-disable-next-line
+  if (indentation===0) console.log();
+  const indentationString = `${'\t'.repeat(indentation)}`;
+  const scoreString = this.score !== null
+    ? `${this.score.player1} - ${this.score.player2}`
+    : '';
+
+  const player1 = this.player1 ? this.player1.telegram_id : 'Not set';
+  const player2 = this.player2 ? this.player2.telegram_id : 'Not set';
+  console.log(`${prefix}${player1} vs ${player2} \t ${scoreString}`);
+
+  if (this.leftChild) {
+    console.log(`${indentationString}┃`);
+    this.leftChild.render(`${indentationString}┣   `, indentation+1);
+  }
+  if (this.rightChild) {
+    console.log(`${indentationString}┃`);
+    this.rightChild.render(`${indentationString}┣   `, indentation+1);
+  }
 };
 
 const Match = mongoose.model('match', MatchSchema);

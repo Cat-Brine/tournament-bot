@@ -25,10 +25,7 @@ TournamentSchema.methods.createMatches = async function () {
   const tournament = this;
   const tournamentId = this._id;
   const matches = [];
-  const score = {
-    player1: 0,
-    player2: 0
-  };
+  const score = null;
   this.playingPlayers = this.players;
 
   const playersTempArr = playersArr.concat();

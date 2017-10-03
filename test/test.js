@@ -194,17 +194,14 @@ describe('Tournament Bot', function ()  {
       bot.game(msgFromAdmin);
       bot.result(msgFromAdmin, correctMatch);
 
-
-      // UP TO HERE
-
       let nextGame = tournament.root.findNextGame();
 
       should.not.equal(nextGame, undefined);
       should.not.equal(nextGame.player1, undefined);
       should.not.equal(nextGame.player2, undefined);
 
-      nextGame.player1.should.eql('23121931')
-      nextGame.player2.should.eql('23121932')
+      nextGame.player1.telegram_id.should.eql(23121931)
+      nextGame.player2.telegram_id.should.eql(23121932)
 
       bot.game(msgFromAdmin);
       bot.result(msgFromAdmin, correctMatch);

@@ -134,8 +134,10 @@ class TournamentBot {
             // tournament.gamePlayed(result, nextGame, (png) => {
             //   this.telegram.sendPhoto(chatId, png);
             // });
-            nextGame.score.player1 = result[0];
-            nextGame.score.player2 = result[2];
+            nextGame.score = {
+              player1: result[0],
+              player2: result[2],
+            };
             nextGame.playing = false;
             const winner = nextGame.score.player1 > nextGame.score.player2 ? nextGame.player1.first_name : nextGame.player2.first_name;
             const loser = nextGame.score.player1 > nextGame.score.player2 ? nextGame.player2.first_name : nextGame.player1.first_name;
