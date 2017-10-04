@@ -66,13 +66,6 @@ MatchSchema.methods.render = function (prefix = '', indentation = 0) {
 };
 
 MatchSchema.methods.placeInNextGame = async function (winner) {
-  // if (!this.player2 && this.rightChild
-  //   && this.rightChild.player2
-  //   && this.rightChild.player2.telegram_id === 23121936
-  //   && winner.telegram_id === 23121936) {
-  //   console.log('MATCH', !this.player2, !!this.rightChild, !!this.rightChild.winner, this.rightChild.winner.telegram_id === winner.telegram_id);
-  // }
-
   if (
     !this.player1 && this.leftChild && this.leftChild.winner
     && this.leftChild.winner.telegram_id === winner.telegram_id
@@ -107,5 +100,12 @@ MatchSchema
   .pre('find', autoPopulate);
 
 const Match = mongoose.model('match', MatchSchema);
+
+Match.findPlayersAllGamesInTournament = async function (playerId, tournamentId) {
+  let allMatches = await Match.find({tournamentId});
+  return allMatches = allMatches
+    .filter(match => match.loser !== null)
+    .filter(match => match.player1.telegram_id === playerId || match.player2.telegram_id === playerId);
+};
 
 module.exports = Match;

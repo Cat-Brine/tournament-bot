@@ -147,7 +147,6 @@ class TournamentBot {
             await tournament.root.placeInNextGame(winner);
             nextGame.playing = false;
             await nextGame.save();
-
             if (tournament.root === nextGame) {
               this.telegram.sendMessage(chatId, messages.overallWinner(winner));
               tournament.playing = false;
@@ -161,7 +160,7 @@ class TournamentBot {
   deleteTournament (msg) {
     const chatId = msg.chat.id;
     const tournament = this.chatsOpen[chatId];
-    const chatAdmin = tournament.chatAdmin;
+    const chatAdmin = tournament.admin;
     const user = msg.from;
     const opts = {
       reply_markup: JSON.stringify({
@@ -172,19 +171,20 @@ class TournamentBot {
       }),
       reply_to_message_id: msg.message_id,
     };
-
     if (tournament) {
-      if (chatAdmin.id === user.id) {
+      if (chatAdmin.telegram_id === user.id) {
         this.telegram.sendMessage(chatId, 'Are you sure?', opts);
       } else this.telegram.sendMessage(chatId, messages.notAdmin(chatAdmin.name));
     } else this.telegram.sendMessage(chatId, messages.notPlaying);
   }
 
-  confirmDeletion (msg) {
+  async confirmDeletion (msg) {
     const chatId = msg.chat.id;
+    const tournament = this.chatsOpen[chatId];
+    const _id = tournament._id;
     const hideKeyboard = {reply_markup: JSON.stringify({hide_keyboard: true})};
-
     delete this.chatsOpen[chatId];
+    await Tournament.deleteTournament(_id);
     this.telegram.sendMessage(chatId, 'Current tournament deleted.', hideKeyboard);
   }
 
@@ -197,7 +197,6 @@ class TournamentBot {
   help (msg) {
     const chatId = msg.chat.id;
     const resp = messages.help;
-
     this.telegram.sendMessage(chatId, resp, {parse_mode: 'Markdown'});
   }
 
@@ -218,14 +217,18 @@ class TournamentBot {
     } else this.telegram.sendMessage(chatId, messages.notPlaying);
   }
 
-  stats (msg) {
+  async stats (msg) {
     const chatId = msg.chat.id;
     const user = msg.from;
     const tournament = this.chatsOpen[chatId];
     if (tournament) {
-      if (tournament.players[user.id]) {
-        const name = tournament.players[user.id].name;
-        const stats = tournament.getStats(user.id);
+      const player = tournament.players.reduce((accum, player) => {
+        if (player.telegram_id === user.id) accum = player;
+        return accum;
+      }, {});
+      if (player) {
+        const name = player.first_name;
+        const stats = await tournament.getStats(user.id);
         this.telegram.sendMessage(chatId, messages.stats(name, stats), {parse_mode: 'Markdown', reply_to_message_id: msg.msg_id});
       } else this.telegram.sendMessage(chatId, messages.userNotPlaying);
     } else this.telegram.sendMessage(chatId, messages.notPlaying);

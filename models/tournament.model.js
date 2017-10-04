@@ -72,6 +72,31 @@ TournamentSchema.methods.addPlayer = function (player) {
   this.players.push(player);
 };
 
+TournamentSchema.methods.getStats = async function (id) {
+  const player = this.players.reduce((accum, player) => {
+    if (player.telegram_id === id) accum = player;
+    return accum;
+  }, {});
+  const tournamentId = this._id;
+  const playerId = id;
+  const matchesPlayed = await Match.findPlayersAllGamesInTournament(playerId, tournamentId);
+  const goalsPerMatch = [];
+  const totalGoals = matchesPlayed.reduce((accum, match) => {
+    const playerNum = match.player1.telegram_id === playerId ? 'player1' : 'player2';
+    goalsPerMatch.push(parseInt(match.score[playerNum]));
+    accum += parseInt(match.score[playerNum]);
+    return accum;
+  }, 0);
+  const avgScore = Math.round(totalGoals / matchesPlayed.length || 0);
+  const highest = goalsPerMatch.length > 0 ? Math.max.apply(null, goalsPerMatch) : 0;
+  const lowest = Math.min.apply(null, goalsPerMatch);
+  return ({
+    highest,
+    lowest,
+    avgScore,
+  });
+};
+
 const autoPopulate = function (next) {
   this
     .populate('admin')
@@ -95,6 +120,14 @@ Tournament.createTournament = async tournament => {
   tournament.start_date = new Date();
   const tournamentWithMatches = await tournament.createMatches();
   return await tournamentWithMatches.save();
+};
+
+Tournament.deleteTournament = async id => {
+  try {
+    await Tournament.remove({_id: id});
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 module.exports = Tournament;
